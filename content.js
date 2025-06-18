@@ -36,7 +36,7 @@ function inserirDadosCalculados(summary) {
   const valorIncrementoMinimo = minIncrementEl ? parseFloat(minIncrementEl.getAttribute('data-value')) : 0;
   
   if (!valorMaiorLance) {
-    console.log('Parece que o item não teve valor ofertado, por isso não será possível prosseguir.')
+    console.log('Parece que o item não teve valor ofertado, por isso não será realizar o cálculo')
     return
   }
 
@@ -86,13 +86,24 @@ function inserirDadosCalculados(summary) {
 // Observa o body por mudanças
 const observer = new MutationObserver((e) => {
   const target = document.querySelector('.bids-summary');
-  if (target) {
-    inserirDadosCalculados();
-    observer.disconnect(); // Para de observar depois que encontrou
+  for (const mutation of mutations) {
+    // Verifica se houve mudança relevante dentro do container
+    if (mutation.type === 'childList' || mutation.type === 'subtree') {
+      inserirDadosCalculados(target);
+      break;  // só precisa rodar uma vez por evento
+    }
   }
 });
 
-observer.observe(document.body, {
-  childList: true,
-  subtree: true
-});
+function iniciarObserver() {
+  const target = document.querySelector('.bids-summary');
+  if (!target) {
+    // se não existir ainda, tenta novamente em 1s
+    setTimeout(iniciarObserver, 1000);
+    return;
+  }
+  observer.observe(target, { childList: true, subtree: true });
+  inserirDadosCalculados(target);
+}
+
+iniciarObserver();
